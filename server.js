@@ -15,6 +15,7 @@ import scheduleRoutes from './routes/scheduleRoutes.js';
 import expenseRoutes from './routes/expenseRoutes.js';
 import enquiryRoutes from './routes/enquiryRoutes.js';
 import dietWorkoutRoutes from './routes/dietWorkoutRoutes.js';
+import advertisementRoutes from './routes/advertisementRoutes.js';
 
 dotenv.config();
 
@@ -39,6 +40,7 @@ app.use('/api/schedules', scheduleRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/enquiries', enquiryRoutes);
 app.use('/api/diet-workouts', dietWorkoutRoutes);
+app.use('/api/advertisements', advertisementRoutes);
 
 
 // --- 1. SEED ROUTE (Optional loader for brand defaults) ---
@@ -117,13 +119,40 @@ app.get('/api/seed-defaults', async (req, res) => {
       ]);
     }
 
+    // 9. Seed Advertisements
+    const Advertisement = (await import('./models/Advertisement.js')).default;
+    if (await Advertisement.countDocuments() === 0) {
+      await Advertisement.insertMany([
+        {
+          title: '🔥 Summer Mega Sale: 50% OFF All Plans!',
+          imageUrl: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?q=80&w=1000&auto=format&fit=crop',
+          targetUrl: 'https://fitx.errorinfotech.in/summer-deal',
+          status: 'Active',
+          targetAudience: 'All'
+        },
+        {
+          title: '💪 Personal Trainer Coaching Masterclass',
+          imageUrl: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?q=80&w=1000&auto=format&fit=crop',
+          targetUrl: 'https://fitx.errorinfotech.in/coaching',
+          status: 'Active',
+          targetAudience: 'Members'
+        }
+      ]);
+    }
+
 
     res.json({ success: true, message: 'Demo setup & config baseline populated.' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+// CNAME / Custom Domain Routing handler
+app.get('*', async (req, res, next) => {
+  if (req.path.startsWith('/api')) {
+    return next();
+  }
+  console.log(`🔗 Redirecting white-label domain ${req.headers.host} to FitX Client environment`);
+  res.redirect('https://fitx.errorinfotech.in');
 });
-
 
 // --- START SERVER ---
 const PORT = process.env.PORT || 5000;
